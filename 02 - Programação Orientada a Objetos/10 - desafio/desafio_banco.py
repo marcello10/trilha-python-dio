@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 class Transacao(ABC):
     @property
     @abstractmethod
@@ -18,18 +19,31 @@ class Deposito(Transacao):
 class Saque(Transacao):
     def __init__(self, valor:float) -> None:
         self.__valor = valor
+    @property
+    def valor(self):
+        return self.__valor
     def registrar(self, conta):
         conta.sacar(self.__valor)
 class Historico:
+    def __init__(self):
+        self.__transacoes = []
+    @property
+    def transacoes(self):
+        return self.__transacoes
     def adicionar_transacao(self,transacao: Transacao):
-        pass
+        self.__transacoes.append(
+            {
+                "tipo": transacao.__class__.__name__,
+                "valor": transacao.valor,
+                "data": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+            })
 class Conta:
     def __init__(self, cliente,numero:int):
         self.__numero = numero
         self.__cliente:Cliente = cliente
         self.__saldo = 0.0
         self.__agencia = "0001"
-        self.__historico : Historico = None
+        self.__historico = Historico()
     @property
     def saldo(self):
         return self.__saldo
@@ -80,8 +94,18 @@ class Cliente:
     def adcionar_conta(self,conta: Conta):
         if isinstance(conta,Conta):
             self.__contas.append(conta)
+    def realizar_transacao(self,conta: Conta,transacao: Transacao):
+        transacao.registrar(conta)
+        conta.historico.adicionar_transacao(transacao)
+        
 class PessoaFisica(Cliente):
     def __init__(self, endereco, cpf,data_nascimento):
         super().__init__(endereco)
-        self.cpf = cpf
-        self.data_nascimento = data_nascimento
+        self.__cpf = cpf
+        self.__data_nascimento = data_nascimento
+    @property
+    def cpf(self):
+        return self.__cpf
+    @property
+    def data_nascimento(self):
+        return self.__data_nascimento
